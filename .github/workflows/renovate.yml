@@ -1,8 +1,6 @@
 name: Renovate
 on:
   workflow_call:
-  # Allows manual/automated ad-hoc trigger
-  workflow_dispatch:
     inputs:
       logLevel:
         description: "Override default log level"
