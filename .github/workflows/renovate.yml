@@ -16,7 +16,7 @@ on:
         type: string
   schedule:
     - cron: '30 3 * * *'
-concurrency: 1
+concurrency: renovate
 jobs:
   renovate:
     runs-on: ubuntu-latest
