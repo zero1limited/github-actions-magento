@@ -12,6 +12,12 @@ on:
         required: false
         default: "false"
         type: string
+      processAuthJson:
+        description: "Transfer credentials from auth.json in renovate.json"
+        required: false
+        default: true
+        type: boolean
+
   schedule:
     - cron: '30 3 * * *'
 concurrency: renovate
@@ -24,6 +30,7 @@ jobs:
       # Don't waste time starting Renovate if JSON is invalid
       - name: Validate Renovate JSON
         run: jq type renovate.json
+
       - name: Get token
         id: get_token
         uses: tibdex/github-app-token@021a2405c7f990db57f5eae5397423dcc554159c # v1.7.0
@@ -31,6 +38,49 @@ jobs:
           app_id: ${{ secrets.RENOVATE_APP_ID }}
           installation_id: ${{ secrets.RENOVATE_INSTALL_ID }}
           private_key: ${{ secrets.RENOVATE_PRIVATE_KEY }}
+
+      # todo chack if enabled and if file exists
+      - name: Process auth.json
+        id: process-auth-json
+        run: |
+          import os
+          import json
+
+          # process auth.json
+          if os.path.isfile("renovate.json"):
+              file = open("renovate.json", "r")
+              renovate = json.loads(file.read())
+              file.close()
+              
+              if "hostRules" not in renovate:
+                  renovate["hostRules"] = []
+
+              if os.path.isfile("auth.json"):
+                  auth = json.loads(open("auth.json", "r").read())
+                  if "http-basic" in auth:
+                      for key in auth["http-basic"]:
+                          secretName = key.upper()
+                          host = "https://" + key
+                          username = auth["http-basic"][key]["username"]
+                          password = auth["http-basic"][key]["password"]
+
+                          renovate["hostRules"].append({
+                              "hostType": "packagist",
+                              "matchHost": host,
+                              "username": username,
+                              "password": password
+                          })
+                  
+                      file = open("renovate.json", "w")
+                      file.write(json.dumps(renovate, indent=2))
+                      file.close()
+                      print("renovate.json updated")
+              else:
+                  print("auth.json doesn't exist")
+          else:
+              print("renovate.json doesn't exist")
+
+        shell: python
 
       - name: Generate Renovate Secrets
         id: renovate-secret-generator
