@@ -20,6 +20,7 @@ on:
 
   schedule:
     - cron: '30 3 * * *'
+
 concurrency: renovate
 jobs:
   renovate:
@@ -42,7 +43,7 @@ jobs:
       # todo chack if enabled and if file exists
       - name: Process auth.json
         id: process-auth-json
-        if: {{ inputs.processAuthJson }}
+        if: ${{ inputs.processAuthJson }}
         run: |
           import os
           import json
