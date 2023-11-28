@@ -42,6 +42,7 @@ jobs:
       # todo chack if enabled and if file exists
       - name: Process auth.json
         id: process-auth-json
+        if: {{ inputs.processAuthJson }}
         run: |
           import os
           import json
